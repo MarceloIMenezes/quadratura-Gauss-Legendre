@@ -6,3 +6,12 @@ function defineW(a, b, n)
   endfor
 endfunction
 
+function defineT(a, b, n, w)
+  t = linspace(0,0,n);
+  for i = 0:n/2
+    t(i) = a + i*w(i)/2;
+    t(n-1-i) = (a + b) - t(i);
+  endfor
+endfunction
+
+
