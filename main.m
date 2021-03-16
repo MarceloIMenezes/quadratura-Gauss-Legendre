@@ -26,6 +26,29 @@ function soma = calculaSoma(n, w, t)
   endfor
 endfunction
 
+function g = calculaIntegralX(a, b, m)
+  g = linspace(0, 0, 2*n);
+  for j = 0:2*n
+    f = @(x) x**j;
+    g(j) = calculaIntegralTrapezio(a, b, m, f);
+  endfor
+endfunction
 
+function I = calculaIntegralTrapezio(a, b, m, f)
+  h = (b-a)/m;
+  x = a;
+  I = 0;
+  for i = 0:(m+1)
+    x = a + i*h;
+    if (i == 0 || i == m)
+      c = 1;
+    else
+      c = 2;
+    endif
+    I += c * f(x); 
+  endfor
+  I = (h/2)*I;
+endfunction
+  
 
 
