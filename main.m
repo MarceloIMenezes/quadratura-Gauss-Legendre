@@ -83,9 +83,10 @@ function [w, t] = metodoNewton(F, a, b, m, tol)
     w = defineW(a, b, m);
     t = defineT(a, b, w);
    [g] = calculaIntegral(a, b, m, f);
+   e = power(10, -8);
    while (true)
      [f] = calculaF(w, t, g);
-     [J] = montaJacobi(g, w, t, f, tol);
+     [J] = montaJacobi(g, w, t, f, e);
      s = J \ (-f);
      wprox = linspace(0, 0, n);
      tprox = linspace(0, 0, n);
@@ -98,8 +99,12 @@ function [w, t] = metodoNewton(F, a, b, m, tol)
         t(i) = tprox(i);
        endif
      endfor
-     if (norm(s,inf)
+     if (norm(s,inf) <= tol)
+       break;
+     endif
    endwhile
+   h = (b-a)/m;
+   save dados.txt F a b m tol w t e h
 endfunction
   
   
