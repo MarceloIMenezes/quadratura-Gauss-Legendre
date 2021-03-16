@@ -31,7 +31,6 @@ endfunction
 function [g] = calculaIntegral(a, b, m, f)
   g = linspace(0, 0, 2*n);
   for j = 1:2*n
-    f = @(x) x**(j-1);
     g(j) = calculaIntegralTrapezio(a, b, m, f);
   endfor
 endfunction
@@ -52,36 +51,55 @@ function I = calculaIntegralTrapezio(a, b, m, f)
   I = (h/2)*I;
 endfunction
 
-function [f] = calculaF(w, t)
+function [f] = calculaF(w, t, g)
   n = lenght(w);
   f = linspace(0, 0, 2*n);
   [soma] = calculaSoma(w, t);
-  [g] = calculaIntegral(a, b, 1000);
   for j = 1:2*n
     f(j) = soma(i) - g(i);
   endfor
 endfunction
 
-function [J] = montaJacobi(w, t, f, it, tol)
+function [J] = montaJacobi(g, w, t, f, tol)
   n = lenght(w);
   J = zeros(n, 2*n);
   for l = 1:n
     for c = 1:n
       w(c) += tol;
       waux = linspace(0, 0, 2*n);
-      [waux] = calculaF(w, t);
+      [waux] = calculaF(w, t, g);
       J(l,c) = (waux(l) - f(l))/tol;
       w(c) -= tol;
       t(c) += tol;
       taux = linspace(0, 0, 2*n);
-      [taux] = calculaF(w, t);
+      [taux] = calculaF(w, t, g);
       J(l, c + n) = (taux(l) - f(l))/tol;
       t(c) -= tol;
     endfor
   endfor
 endfunction
 
-function [wFin, tFin] = metodoNewton(F)
-   g = calculaIntegral(
+function [w, t] = metodoNewton(F, a, b, m, tol)
+    w = defineW(a, b, m);
+    t = defineT(a, b, w);
+   [g] = calculaIntegral(a, b, m, f);
+   while (true)
+     [f] = calculaF(w, t, g);
+     [J] = montaJacobi(g, w, t, f, tol);
+     s = J \ (-f);
+     wprox = linspace(0, 0, n);
+     tprox = linspace(0, 0, n);
+     for i = 1:2*n
+       if (i <= n)
+        wprox(i) = s(i) + w(i);
+        w(i) = wprox(i);
+       else
+        tprox(i) = s(i) + t(i);
+        t(i) = tprox(i);
+       endif
+     endfor
+     if (norm(s,inf)
+   endwhile
+endfunction
   
   
