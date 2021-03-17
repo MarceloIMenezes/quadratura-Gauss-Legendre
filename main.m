@@ -1,37 +1,51 @@
+1
+format long;
+
+  [w, t] = metodoNewton(-1, 1, 7, 10e-8);
+  #[g] = calculaIntegral(-1, 1, 7, 1000);
+  #f = calculaF(w, t, g);
+  #soma = calculaSoma(w, t);
+  #[J] = montaJacobi(g, w, t, f, e);
+  #s = J\(-f);
+  F = @(x) (exp(-x + 1));
+  r = quadraturaGaussiana(w, t, F);
+  save respostas.txt w t F r;
+
 function [w] = defineW(a, b, n)
-  w = linspace(0,0,n);
-  for i = 1:n/2
+  w = double(linspace(0,0,n));
+  for i = 1:ceil(n/2)
     w(i) = ((b-a)/(2*n))*i;
     w(n+1-i) = w(i);
   endfor
 endfunction
 
 function [t] = defineT(a, b, w)
-  n = lenght(w);
-  t = linspace(0,0,n);
-  for i = 1:n/2
+  n = length(w);
+  t = double(linspace(0,0,n));
+  for i = 1:ceil(n/2)
     t(i) = a + i*w(i)/2;
     t(n+1-i) = (a + b) - t(i);
   endfor
   if (rem(n,2) != 0)
-    t(n/2) = (a+b)/2;
+    t(ceil(n/2)) = (a+b)/2;
   endif
 endfunction
 
 function [soma] = calculaSoma(w, t)
-  n = lenght(w);
-  soma = linspace(0, 0, 2*n);
+  n = length(w);
+  soma = double(linspace(0, 0, 2*n));
   for j = 1:2*n
     for i = 1:n
-      soma(j) += w(i)*(t(0)**j-1);
+      soma(j) += (w(i)).*((t(i)).^(j-1));
     endfor
   endfor
 endfunction
 
-function [g] = calculaIntegral(a, b, m, f)
-  g = linspace(0, 0, 2*n);
+function [g] = calculaIntegral(a, b, n, m)
+  g = double(linspace(0, 0, 2*n));
   for j = 1:2*n
-    g(j) = calculaIntegralTrapezio(a, b, m, f);
+    y = @(x) x^(j-1);
+    g(j) = calculaIntegralTrapezio(a, b, m, y);
   endfor
 endfunction
 
@@ -52,59 +66,66 @@ function I = calculaIntegralTrapezio(a, b, m, f)
 endfunction
 
 function [f] = calculaF(w, t, g)
-  n = lenght(w);
-  f = linspace(0, 0, 2*n);
+  n = length(w);
+  f = double(zeros(2*n, 1));
   [soma] = calculaSoma(w, t);
   for j = 1:2*n
-    f(j) = soma(i) - g(i);
+    f(j) = soma(j) - g(j);
   endfor
 endfunction
 
 function [J] = montaJacobi(g, w, t, f, tol)
-  n = lenght(w);
-  J = zeros(n, 2*n);
-  for l = 1:n
-    for c = 1:n
-      w(c) += tol;
-      waux = linspace(0, 0, 2*n);
-      [waux] = calculaF(w, t, g);
-      J(l,c) = (waux(l) - f(l))/tol;
-      w(c) -= tol;
-      t(c) += tol;
-      taux = linspace(0, 0, 2*n);
-      [taux] = calculaF(w, t, g);
-      J(l, c + n) = (taux(l) - f(l))/tol;
-      t(c) -= tol;
+  n = length(w);
+  J = double(zeros(2*n, 2*n));
+  waux = double(linspace(0,0,n));
+  taux = double(linspace(0,0,n));
+  for l = 1:2*n
+    for c = 1:(n)
+      waux = w;
+      waux(c) += tol;
+      [fwaux] = calculaF(waux, t, g);
+      J(l,c) = (fwaux(l) - f(l))/tol;
+      taux = t;
+      taux(c) += tol;
+      [ftaux] = calculaF(w, taux, g);
+      J(l, c + n) = (ftaux(l) - f(l))/tol;
     endfor
   endfor
 endfunction
 
-function [w, t] = metodoNewton(F, a, b, m, tol)
-    w = defineW(a, b, m);
+function [w, t] = metodoNewton(a, b, n, tol)
+    w = defineW(a, b, n);
     t = defineT(a, b, w);
-   [g] = calculaIntegral(a, b, m, f);
-   e = power(10, -8);
+   [g] = calculaIntegral(a, b, n, 1);
+   e = 10e-8;
+   s = linspace(0, 0, 2*n);
    while (true)
      [f] = calculaF(w, t, g);
      [J] = montaJacobi(g, w, t, f, e);
-     s = J \ (-f);
+     s = J\(-f);
      wprox = linspace(0, 0, n);
      tprox = linspace(0, 0, n);
      for i = 1:2*n
-       if (i <= n)
-        wprox(i) = s(i) + w(i);
-        w(i) = wprox(i);
-       else
-        tprox(i) = s(i) + t(i);
-        t(i) = tprox(i);
-       endif
+       if i <= n
+          wprox(i) = s(i) + w(i);
+          w(i) = wprox(i);
+        else
+          tprox(i-n) = s(i) + t(i-n);
+          t(i-n) = tprox(i-n);
+        endif
      endfor
      if (norm(s,inf) <= tol)
        break;
      endif
    endwhile
-   h = (b-a)/m;
-   save dados.txt F a b m tol w t e h
+   h = (b-a)/1000;
+   save dados.txt g a b n tol e h s;
 endfunction
-  
-  
+
+function [r] = quadraturaGaussiana(w, t, F)
+    n = length(w);
+    r = 0;
+    for i = 1:n,
+       r += w(i) * F(t(i));
+    endfor
+endfunction
